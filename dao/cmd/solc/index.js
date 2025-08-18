@@ -28,6 +28,10 @@ for (const contract of CONTRACT_FILES) {
       },
     },
     settings: {
+      optimizer: {
+        enabled: true,
+        runs: 200,
+      },
       outputSelection: {
         '*': {
           '*': ['*'],
