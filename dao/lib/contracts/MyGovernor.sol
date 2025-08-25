@@ -1,17 +1,19 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.20;
+// Compatible with OpenZeppelin Contracts ^5.4.0
+pragma solidity ^0.8.27;
 
-import {IGovernor, Governor} from "@openzeppelin/contracts/governance/Governor.sol";
+import {Governor} from "@openzeppelin/contracts/governance/Governor.sol";
 import {GovernorCountingSimple} from "@openzeppelin/contracts/governance/extensions/GovernorCountingSimple.sol";
+import {GovernorSettings} from "@openzeppelin/contracts/governance/extensions/GovernorSettings.sol";
+import {GovernorTimelockControl} from "@openzeppelin/contracts/governance/extensions/GovernorTimelockControl.sol";
 import {GovernorVotes} from "@openzeppelin/contracts/governance/extensions/GovernorVotes.sol";
 import {GovernorVotesQuorumFraction} from "@openzeppelin/contracts/governance/extensions/GovernorVotesQuorumFraction.sol";
-import {GovernorTimelockControl} from "@openzeppelin/contracts/governance/extensions/GovernorTimelockControl.sol";
-import {TimelockController} from "@openzeppelin/contracts/governance/TimelockController.sol";
 import {IVotes} from "@openzeppelin/contracts/governance/utils/IVotes.sol";
-import {IERC165} from "@openzeppelin/contracts/interfaces/IERC165.sol";
+import {TimelockController} from "@openzeppelin/contracts/governance/TimelockController.sol";
 
 contract MyGovernor is
     Governor,
+    GovernorSettings,
     GovernorCountingSimple,
     GovernorVotes,
     GovernorVotesQuorumFraction,
@@ -22,24 +24,13 @@ contract MyGovernor is
         TimelockController _timelock
     )
         Governor("MyGovernor")
+        GovernorSettings(7200 /* 1 day */, 50400 /* 1 week */, 0)
         GovernorVotes(_token)
         GovernorVotesQuorumFraction(4)
         GovernorTimelockControl(_timelock)
     {}
 
-    function votingDelay() public pure override returns (uint256) {
-        return 100; // 1 day
-    }
-
-    function votingPeriod() public pure override returns (uint256) {
-        return 100; // 1 week
-    }
-
-    function proposalThreshold() public pure override returns (uint256) {
-        return 0;
-    }
-
-    // The functions below are overrides required by Solidity.
+    // The following functions are overrides required by Solidity.
 
     function state(
         uint256 proposalId
@@ -54,14 +45,17 @@ contract MyGovernor is
 
     function proposalNeedsQueuing(
         uint256 proposalId
-    )
+    ) public view override(Governor, GovernorTimelockControl) returns (bool) {
+        return super.proposalNeedsQueuing(proposalId);
+    }
+
+    function proposalThreshold()
         public
         view
-        virtual
-        override(Governor, GovernorTimelockControl)
-        returns (bool)
+        override(Governor, GovernorSettings)
+        returns (uint256)
     {
-        return super.proposalNeedsQueuing(proposalId);
+        return super.proposalThreshold();
     }
 
     function _queueOperations(
