@@ -17,18 +17,21 @@ import (
 var (
 	ctx = context.Background()
 
+	// Variables to store the contract addresses.
 	govTokenAddr   common.Address
 	timeLockAddr   common.Address
 	certAddr       common.Address
 	myGovernorAddr common.Address
 )
 
+// Main config.
 type deployerConfig struct {
 	addr   common.Address
 	client *ethclient.Client
 	opts   *bind.TransactOpts
 }
 
+// Method to update the transaction authorization data.
 func (d *deployerConfig) newOpts() error {
 	nonce, err := d.client.PendingNonceAt(ctx, d.addr)
 	if err != nil {
@@ -47,6 +50,7 @@ func (d *deployerConfig) newOpts() error {
 	return nil
 }
 
+// Method to deploy contracts.
 func (d *deployerConfig) deployContract(metadata *bind.MetaData, input []byte) (common.Address, error) {
 	if err := d.newOpts(); err != nil {
 		return common.Address{}, err
@@ -72,6 +76,7 @@ func (d *deployerConfig) deployContract(metadata *bind.MetaData, input []byte) (
 	return result.Addresses[metadata.ID], nil
 }
 
+// Method used for 'write' operations with a contract.
 func (d *deployerConfig) transact(wrapper *bind.BoundContract, data []byte) error {
 	if err := d.newOpts(); err != nil {
 		return err
@@ -89,6 +94,7 @@ func (d *deployerConfig) transact(wrapper *bind.BoundContract, data []byte) erro
 	return nil
 }
 
+// Function to create the main config.
 func initialize(rawurl, key string) (*deployerConfig, error) {
 	privateKey, err := crypto.HexToECDSA(key)
 	if err != nil {
@@ -128,6 +134,7 @@ func main() {
 	// Initialize a GovToken instance.
 	govToken := bindings.NewGovToken()
 
+	// Deploy GovToken contract.
 	govTokenAddr, err = config.deployContract(
 		&bindings.GovTokenMetaData,
 		govToken.PackConstructor(config.addr),
@@ -139,6 +146,7 @@ func main() {
 	// Initialize a TimeLock instance.
 	timeLock := bindings.NewTimeLock()
 
+	// Deploy TimeLock contract.
 	timeLockAddr, err = config.deployContract(
 		&bindings.TimeLockMetaData,
 		timeLock.PackConstructor(
@@ -155,6 +163,7 @@ func main() {
 	// Initialize a Cert instance.
 	cert := bindings.NewCert()
 
+	// Deploy Cert contract.
 	certAddr, err = config.deployContract(
 		&bindings.CertMetaData,
 		cert.PackConstructor(timeLockAddr),
@@ -166,6 +175,7 @@ func main() {
 	// Initialize a Cert instance.
 	myGovernor := bindings.NewMyGovernor()
 
+	// Deploy MyGovernor contract.
 	myGovernorAddr, err = config.deployContract(
 		&bindings.CertMetaData,
 		myGovernor.PackConstructor(govTokenAddr, timeLockAddr),
@@ -231,5 +241,4 @@ func main() {
 	}
 
 	log.Printf("\033[32m[INFO]\033[0m Granted \033[35m%s\033[0m to MyGovernor contract.", "EXECUTOR_ROLE")
-
 }
