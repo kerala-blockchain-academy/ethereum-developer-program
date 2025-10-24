@@ -4,34 +4,21 @@
   "scripts": {
     "node": "hardhat node",
     "deploy": "hardhat ignition deploy ./ignition/modules/Oracle.ts",
-    "v1": "ts-node ./callOracle.ts",
-    "v2": "ts-node ./listenOracle.ts"
+    "v1": "node ./callOracle.ts",
+    "v2": "node ./listenOracle.ts"
   },
+  "type": "module",
   "author": "Kerala Blockchain Academy",
   "license": "MIT",
   "devDependencies": {
-    "@nomicfoundation/hardhat-chai-matchers": "^2.0.0",
-    "@nomicfoundation/hardhat-ethers": "^3.0.0",
-    "@nomicfoundation/hardhat-ignition": "^0.15.0",
-    "@nomicfoundation/hardhat-ignition-ethers": "^0.15.0",
-    "@nomicfoundation/hardhat-network-helpers": "^1.0.0",
-    "@nomicfoundation/hardhat-toolbox": "^5.0.0",
-    "@nomicfoundation/hardhat-verify": "^2.0.0",
-    "@typechain/ethers-v6": "^0.5.0",
-    "@typechain/hardhat": "^9.0.0",
-    "@types/chai": "^4.2.0",
-    "@types/mocha": ">=9.1.0",
-    "@types/node": ">=18.0.0",
-    "chai": "^4.2.0",
-    "hardhat": "^2.22.17",
-    "hardhat-gas-reporter": "^1.0.8",
-    "solidity-coverage": "^0.8.0",
-    "ts-node": ">=8.0.0",
-    "typechain": "^8.3.0",
-    "typescript": ">=4.5.0"
+    "@nomicfoundation/hardhat-ignition": "^3.0.3",
+    "@nomicfoundation/hardhat-toolbox-viem": "^5.0.0",
+    "@types/node": "^22.18.12",
+    "hardhat": "^3.0.9",
+    "typescript": "~5.8.3"
   },
   "dependencies": {
     "axios": "^1.7.9",
-    "ethers": "^6.13.4"
+    "viem": "^2.38.4"
   }
 }
