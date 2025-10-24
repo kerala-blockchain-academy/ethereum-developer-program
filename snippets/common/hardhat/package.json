@@ -4,7 +4,8 @@
   "scripts": {
     "node": "hardhat node"
   },
+  "type": "module",
   "dependencies": {
-    "hardhat": "^2.24.0"
+    "hardhat": "^3.0.9"
   }
 }
