@@ -1,8 +1,14 @@
 import { ChangeEvent, FormEvent, useState } from 'react'
 import './App.css'
-import { Contract, BrowserProvider } from 'ethers'
+import { createWalletClient, custom } from 'viem'
 import { contractAddress } from './deployed_addresses.json'
 import { abi } from './Cert.json'
+import {
+  readContract,
+  waitForTransactionReceipt,
+  writeContract,
+} from 'viem/actions'
+import { hardhat } from 'viem/chains'
 
 function App() {
   const [output, setOutput] = useState('')
@@ -16,12 +22,16 @@ function App() {
     date: '',
   })
 
-  const provider = new BrowserProvider(window.ethereum)
+  const client = createWalletClient({
+    chain: hardhat,
+    transport: custom(window.ethereum),
+  })
 
   const connectMetaMask = async () => {
-    const signer = await provider.getSigner()
+    const accounts = await client.requestAddresses()
+    console.log(accounts)
 
-    alert(`Successfully Connected ${signer.address}`)
+    alert(`Successfully Connected ${accounts[0]}`)
   }
 
   const handleChange = (event: ChangeEvent<HTMLInputElement>) => {
@@ -34,17 +44,23 @@ function App() {
 
     console.log(formData)
 
-    const signer = await provider.getSigner()
-    const instance = new Contract(contractAddress, abi, signer)
+    const accounts = await client.getAddresses()
+    const hash = await writeContract(client, {
+      address: contractAddress as `0x${string}`,
+      abi: abi,
+      functionName: 'issue',
+      args: [
+        formData.id,
+        formData.name,
+        formData.course,
+        formData.grade,
+        formData.date,
+      ],
+      account: accounts[0],
+    })
+    console.log('Transaction Hash:', hash)
 
-    const trx = await instance.issue(
-      formData.id,
-      formData.name,
-      formData.course,
-      formData.grade,
-      formData.date
-    )
-    console.log('Transaction Hash:', trx.hash)
+    await waitForTransactionReceipt(client, { hash })
 
     resetForm()
   }
@@ -54,10 +70,13 @@ function App() {
   }
 
   const getCertificate = async () => {
-    const signer = await provider.getSigner()
-    const instance = new Contract(contractAddress, abi, signer)
+    let result = (await readContract(client, {
+      address: contractAddress as `0x${string}`,
+      abi: abi,
+      functionName: 'Certificates',
+      args: [queryID],
+    })) as string[]
 
-    const result = await instance.Certificates(queryID)
     if (result) {
       console.log(result)
       setOutput(
@@ -74,58 +93,58 @@ function App() {
       <br />
       <form onSubmit={handleSubmit}>
         <div>
-          <label htmlFor="id">ID: </label>
+          <label htmlFor='id'>ID: </label>
           <input
-            type="number"
-            id="id"
-            name="id"
+            type='number'
+            id='id'
+            name='id'
             value={formData.id}
             onChange={handleChange}
           />
         </div>
         <div>
-          <label htmlFor="name">Name: </label>
+          <label htmlFor='name'>Name: </label>
           <input
-            type="text"
-            id="name"
-            name="name"
+            type='text'
+            id='name'
+            name='name'
             value={formData.name}
             onChange={handleChange}
           />
         </div>
         <div>
-          <label htmlFor="course">Course: </label>
+          <label htmlFor='course'>Course: </label>
           <input
-            type="text"
-            id="course"
-            name="course"
+            type='text'
+            id='course'
+            name='course'
             value={formData.course}
             onChange={handleChange}
           />
         </div>
         <div>
-          <label htmlFor="grade">Grade: </label>
+          <label htmlFor='grade'>Grade: </label>
           <input
-            type="text"
-            id="grade"
-            name="grade"
+            type='text'
+            id='grade'
+            name='grade'
             value={formData.grade}
             onChange={handleChange}
           />
         </div>
         <div>
-          <label htmlFor="date">Date: </label>
+          <label htmlFor='date'>Date: </label>
           <input
-            type="date"
-            id="date"
-            name="date"
+            type='date'
+            id='date'
+            name='date'
             value={formData.date}
             onChange={handleChange}
           />
         </div>
         <div>
-          <button type="submit">Submit</button>
-          <button type="button" onClick={resetForm}>
+          <button type='submit'>Submit</button>
+          <button type='button' onClick={resetForm}>
             Reset
           </button>
         </div>
@@ -133,11 +152,11 @@ function App() {
       <br />
       <br />
       <div>
-        <label htmlFor="queryID">Query ID: </label>
+        <label htmlFor='queryID'>Query ID: </label>
         <input
-          type="number"
-          id="queryID"
-          name="queryID"
+          type='number'
+          id='queryID'
+          name='queryID'
           value={queryID}
           onChange={(e) => setQueryID(Number(e.target.value))}
         />

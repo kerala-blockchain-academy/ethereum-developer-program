@@ -1,9 +1,9 @@
 /// <reference types="vite/client" />
 
-import { Eip1193Provider } from 'ethers'
+import { EIP1193Provider } from "viem";
 
 declare global {
   interface Window {
-    ethereum: Eip1193Provider
+    ethereum: EIP1193Provider
   }
 }
