@@ -1,19 +1,25 @@
 import 'dotenv/config'
-import { Contract, WebSocketProvider } from 'ethers'
+import { createPublicClient, parseAbiItem, webSocket } from 'viem'
+import { hardhat } from 'viem/chains'
 import details from './lib/deployed_addresses.json'
-import Cert from './lib/Cert.json'
 
-const provider = new WebSocketProvider(process.env.WS_URL!)
-const instance = new Contract(details.contract, Cert.abi, provider)
+const client = createPublicClient({
+  chain: hardhat,
+  transport: webSocket(process.env.WS_URL),
+})
 
-;(() => {
-  console.log('Listening for Issue Events...')
-  instance.on('Issued', (course, id, grade, event) => {
-    console.log('**** EVENT OCCURED ****')
-    console.log('course:', course)
-    console.log('id:', id)
-    console.log('grade:', grade)
-    console.log('event:', event)
-    console.log('***********************')
-  })
-})()
+console.log('Listening for Issued Events...')
+
+client.watchEvent({
+  address: details.contract as `0x${string}`,
+  event: parseAbiItem(
+    'event Issued(string indexed course, uint256 id, string grade)'
+  ),
+  onLogs: (logs) => {
+    console.log('================ EVENT OCCURED ================')
+    console.log('Course: ', logs[0].args.course)
+    console.log('ID: ', logs[0].args.id)
+    console.log('Grade: ', logs[0].args.grade)
+    console.log('===============================================')
+  },
+})

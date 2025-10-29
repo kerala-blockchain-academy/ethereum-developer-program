@@ -1,44 +1,31 @@
 import { Router } from 'express'
-import { id, Interface, LogDescription } from 'ethers'
-import { provider } from '../lib/instance.js'
+import { createPublicClient, http, parseAbiItem } from 'viem'
+import { hardhat } from 'viem/chains'
 import details from '../lib/deployed_addresses.json'
-import Cert from '../lib/Cert.json'
 const router = Router()
-
-const eventTopic = id('Issued(string,uint256,string)')
-const iface = new Interface(Cert.abi)
-
-declare global {
-  interface BigInt {
-    toJSON(): string
-  }
-}
-
-BigInt.prototype.toJSON = function (): string {
-  return this.toString()
-}
 
 router.get('/', async (req, res) => {
   try {
-    let eventlogs: any = []
+    let events
     if (req.query.course) {
-      const courseTopic = id(req.query.course.toString())
+      const client = createPublicClient({
+        chain: hardhat,
+        transport: http(process.env.HTTP_URL),
+      })
 
-      await provider
-        .getLogs({
-          fromBlock: 0,
-          toBlock: 'latest',
-          address: details.contract,
-          topics: [eventTopic, courseTopic],
-        })
-        .then((logs) => {
-          logs.forEach((log) => {
-            eventlogs.push(iface.parseLog(log))
-          })
-        })
+      const filter = await client.createEventFilter({
+        address: details.contract as `0x${string}`,
+        event: parseAbiItem(
+          'event Issued(string indexed course, uint256 id, string grade)'
+        ),
+        fromBlock: 'earliest',
+        args: { course: req.query.course.toString() },
+      })
+
+      events = await client.getFilterLogs({ filter })
     }
 
-    res.json(eventlogs)
+    res.json(events)
   } catch (error) {
     console.log(error)
     res.json(error)
